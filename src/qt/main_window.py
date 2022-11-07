@@ -1,5 +1,5 @@
 import logging
-from parser import base_currencies, client
+from parser import base_currencies, client, crypto_currencies
 
 from PyQt6 import QtCore, QtWidgets
 
@@ -11,6 +11,8 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Main window
         self.setWindowTitle("Crypto-predictor")
+        self.setMinimumSize(300, 180)
+        self.resize(1000, 500)
 
         # Central widget
         self.central_widget = QtWidgets.QWidget()
@@ -19,85 +21,80 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Currencies
         self.currencies_group = QtWidgets.QGroupBox()
-        self.central_widget_layout.addWidget(self.currencies_group)
-        self.currencies_layout = QtWidgets.QHBoxLayout(self.currencies_group)
         self.currencies_group.setStyleSheet("QComboBox { combobox-popup: 0; }")
+        self.currencies_group.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Maximum)
+        self.currencies_layout = QtWidgets.QHBoxLayout(self.currencies_group)
+        self.central_widget_layout.addWidget(self.currencies_group)
+
         # Crypto currency combobox
         self.crypto_currency = QtWidgets.QComboBox()
-        self.crypto_currency.setMaxVisibleItems(20)
-        self.crypto_currency.currentTextChanged.connect(self._change_crypto_currency_combobox_event)
-        self.crypto_currency_block = True
-        self.crypto_currency.installEventFilter(self.crypto_currency)
-        self.crypto_currency_current: str = "BTC"
+        self.crypto_currency.setMaxVisibleItems(30)
         self.currencies_layout.addWidget(self.crypto_currency)
-        # '/' label between comboboxes
+
+        # Label between comboboxes '/'
         label = QtWidgets.QLabel(" / ")
         label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        label.setSizePolicy(
-            QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
-        )
+        label.setSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
         self.currencies_layout.addWidget(label)
+
         # Base currency combobox
         self.base_currency = QtWidgets.QComboBox()
-        self.base_currency.setMaxVisibleItems(20)
-        self.base_currency.currentTextChanged.connect(self._change_base_currency_combobox_event)
-        self.base_currency_block = True
-        self.base_currency_current: str = "USD"
+        self.base_currency.setMaxVisibleItems(30)
         self.currencies_layout.addWidget(self.base_currency)
 
         # Graph (stub)
         self.graph_widget = QtWidgets.QLabel()
-        self.central_widget_layout.addWidget(self.graph_widget)
         self.graph_widget.setStyleSheet("QLabel { background-color: #222; }")
+        self.central_widget_layout.addWidget(self.graph_widget)
 
         # Control panel
         self.control_group = QtWidgets.QGroupBox()
-        self.central_widget_layout.addWidget(self.control_group)
+        self.control_group.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Maximum)
         self.control_group_layout = QtWidgets.QHBoxLayout(self.control_group)
-        self.control_checkbox_run = QtWidgets.QCheckBox()
-        self.control_group_layout.addWidget(self.control_checkbox_run)
-        self.control_checkbox_run.clicked.connect(self._control_checkbox_run_event)
-        self.control_checkbox_run.setText("Run")
-        self.control_checkbox_learn = QtWidgets.QCheckBox()
-        self.control_group_layout.addWidget(self.control_checkbox_learn)
-        self.control_checkbox_learn.setText("Learn")
-        self.control_checkbox_predicate = QtWidgets.QCheckBox()
-        self.control_group_layout.addWidget(self.control_checkbox_predicate)
-        self.control_checkbox_predicate.setText("Predicate")
+        self.central_widget_layout.addWidget(self.control_group)
+
+        # Control run
+        self.control_run = QtWidgets.QPushButton()
+        self.control_run.setText("Run")
+        self.control_run.setCheckable(True)
+        self.control_run.clicked.connect(self._control_checkbox_run_event)
+        self.control_group_layout.addWidget(self.control_run)
+
+        # Control learn
+        self.control_learn = QtWidgets.QPushButton()
+        self.control_learn.setText("Learn")
+        self.control_learn.setCheckable(True)
+        self.control_learn.setEnabled(False)
+        self.control_group_layout.addWidget(self.control_learn)
+
+        # Control predicate
+        self.control_predicate = QtWidgets.QPushButton()
+        self.control_predicate.setText("Predicate")
+        self.control_predicate.setCheckable(True)
+        self.control_predicate.setEnabled(False)
+        self.control_group_layout.addWidget(self.control_predicate)
 
         # Final logic
-        self._fill_currency_combobox()
+        self._fill_currencies_comboboxes()
 
-    def _fill_currency_combobox(self) -> None:
-        self.log("self._fill_currency_combobox()")
+    def _fill_currencies_comboboxes(self) -> None:
         for currency in base_currencies:
             self.base_currency.addItem(currency["id"])
-        self.base_currency_block = False
-        self.base_currency.setCurrentText(self.base_currency_current)
+        self.base_currency.setCurrentText("USD")
+        for currency in crypto_currencies:
+            self.crypto_currency.addItem(currency)
+        self.crypto_currency.setCurrentText("BTC")
 
-    def _change_base_currency_combobox_event(self, base_currency_str) -> None:
-        if self.base_currency_block:
-            return
-        self.log(f"self._change_base_currency_combobox_event({base_currency_str=})")
-        self.crypto_currency_block = True
-        self.rates = client.get_exchange_rates(currency=base_currency_str)["rates"]
-        for rate in self.rates:
-            self.crypto_currency.addItem(rate)
-        self.crypto_currency.setCurrentText(self.crypto_currency_current)
-        self._change_crypto_currency_combobox()
-        self.crypto_currency_block = False
-
-    def _change_crypto_currency_combobox_event(self, crypto_currency_str) -> None:
-        if self.crypto_currency_block:
-            return
-        self.crypto_currency_current = crypto_currency_str
-        self.log(f"self._change_crypto_currency_combobox_event({crypto_currency_str=})")
-        self._change_crypto_currency_combobox()
-
-    def _change_crypto_currency_combobox(self) -> None:
-        self.log("self._change_crypto_currency_combobox()")
-        price = self.rates[self.crypto_currency_current]
-        self.graph_widget.setText(price)
-
-    def _control_checkbox_run_event(self, b: bool) -> None:
-        self.currencies_group.setEnabled(not b)
+    def _control_checkbox_run_event(self, is_checked: bool) -> None:
+        self.log(f"self._control_checkbox_run_event({is_checked=})")
+        self.currencies_group.setEnabled(not is_checked)
+        self.control_learn.setEnabled(is_checked)
+        self.control_predicate.setEnabled(is_checked)
+        if is_checked:
+            price = client.get_spot_price(
+                currency_pair=f"{self.crypto_currency.currentText()}-{self.base_currency.currentText()}"
+            )["amount"]
+            self.graph_widget.setText(price)
+        else:
+            self.graph_widget.setText("")
+        print(self.size())
