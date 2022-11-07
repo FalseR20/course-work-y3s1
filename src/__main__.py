@@ -1,4 +1,4 @@
-from qt.app import app
+from src.qt.app import app
 
 
 def main():

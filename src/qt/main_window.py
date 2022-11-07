@@ -1,5 +1,5 @@
 import logging
-from parser import base_currencies, client, crypto_currencies
+from src.parser import base_currencies, client, crypto_currencies
 
 from PyQt6 import QtCore, QtWidgets
 
@@ -97,4 +97,3 @@ class MainWindow(QtWidgets.QMainWindow):
             self.graph_widget.setText(price)
         else:
             self.graph_widget.setText("")
-        print(self.size())
