@@ -4,7 +4,6 @@ from parser import base_currencies, client
 from PyQt6 import QtCore, QtWidgets
 
 
-# noinspection PyUnresolvedReferences
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
@@ -57,6 +56,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.control_group_layout = QtWidgets.QHBoxLayout(self.control_group)
         self.control_checkbox_run = QtWidgets.QCheckBox()
         self.control_group_layout.addWidget(self.control_checkbox_run)
+        self.control_checkbox_run.clicked.connect(self._control_checkbox_run_event)
         self.control_checkbox_run.setText("Run")
         self.control_checkbox_learn = QtWidgets.QCheckBox()
         self.control_group_layout.addWidget(self.control_checkbox_learn)
@@ -98,3 +98,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.log("self._change_crypto_currency_combobox()")
         price = self.rates[self.crypto_currency_current]
         self.graph_widget.setText(price)
+
+    def _control_checkbox_run_event(self, b: bool) -> None:
+        self.currencies_group.setEnabled(not b)
