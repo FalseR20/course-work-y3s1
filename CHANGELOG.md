@@ -9,4 +9,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
+- Add basic front-end
+- Requirements for python
 - Changelog
