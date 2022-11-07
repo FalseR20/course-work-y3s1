@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ### Added
 
-- Add basic front-end
-- Requirements for python
 - Changelog
+- Requirements for python
+- Basic front-end
+- Parsing of currencies and filling comboboxes
