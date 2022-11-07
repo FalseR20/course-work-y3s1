@@ -1,4 +1,5 @@
-from parser import client, currencies
+import logging
+from parser import base_currencies, client
 
 from PyQt6 import QtCore, QtWidgets
 
@@ -7,6 +8,7 @@ from PyQt6 import QtCore, QtWidgets
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self.log = lambda *args_, **kwargs_: logging.log(logging.DEBUG + 5, *args_, **kwargs_)
 
         # Main window
         self.setWindowTitle("Crypto-predictor")
@@ -21,10 +23,14 @@ class MainWindow(QtWidgets.QMainWindow):
         self.central_widget_layout.addWidget(self.currencies_group)
         self.currencies_layout = QtWidgets.QHBoxLayout(self.currencies_group)
         self.currencies_group.setStyleSheet("QComboBox { combobox-popup: 0; }")
-        # Currency combobox
-        self.currency = QtWidgets.QComboBox()
-        self.currency.setMaxVisibleItems(20)
-        self.currencies_layout.addWidget(self.currency)
+        # Crypto currency combobox
+        self.crypto_currency = QtWidgets.QComboBox()
+        self.crypto_currency.setMaxVisibleItems(20)
+        self.crypto_currency.currentTextChanged.connect(self._change_crypto_currency_combobox_event)
+        self.crypto_currency_block = True
+        self.crypto_currency.installEventFilter(self.crypto_currency)
+        self.crypto_currency_current: str = "BTC"
+        self.currencies_layout.addWidget(self.crypto_currency)
         # '/' label between comboboxes
         label = QtWidgets.QLabel(" / ")
         label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
@@ -32,10 +38,13 @@ class MainWindow(QtWidgets.QMainWindow):
             QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Maximum, QtWidgets.QSizePolicy.Policy.Maximum)
         )
         self.currencies_layout.addWidget(label)
-        # Currency-base combobox
-        self.currency_base = QtWidgets.QComboBox()
-        self.currency_base.setMaxVisibleItems(20)
-        self.currencies_layout.addWidget(self.currency_base)
+        # Base currency combobox
+        self.base_currency = QtWidgets.QComboBox()
+        self.base_currency.setMaxVisibleItems(20)
+        self.base_currency.currentTextChanged.connect(self._change_base_currency_combobox_event)
+        self.base_currency_block = True
+        self.base_currency_current: str = "USD"
+        self.currencies_layout.addWidget(self.base_currency)
 
         # Graph (stub)
         self.graph_widget = QtWidgets.QLabel()
@@ -60,13 +69,32 @@ class MainWindow(QtWidgets.QMainWindow):
         self._fill_currency_combobox()
 
     def _fill_currency_combobox(self) -> None:
-        for currency in currencies:
-            self.currency_base.addItem(currency["id"])
-        self.currency_base.currentTextChanged.connect(self._change_currency_combobox_event)
-        self.currency_base.setCurrentText("USD")
+        self.log("self._fill_currency_combobox()")
+        for currency in base_currencies:
+            self.base_currency.addItem(currency["id"])
+        self.base_currency_block = False
+        self.base_currency.setCurrentText(self.base_currency_current)
 
-    def _change_currency_combobox_event(self, item) -> None:
-        self.rates = client.get_exchange_rates(currency=item)["rates"]
+    def _change_base_currency_combobox_event(self, base_currency_str) -> None:
+        if self.base_currency_block:
+            return
+        self.log(f"self._change_base_currency_combobox_event({base_currency_str=})")
+        self.crypto_currency_block = True
+        self.rates = client.get_exchange_rates(currency=base_currency_str)["rates"]
         for rate in self.rates:
-            self.currency.addItem(rate)
-        self.currency.setCurrentText("BTC")
+            self.crypto_currency.addItem(rate)
+        self.crypto_currency.setCurrentText(self.crypto_currency_current)
+        self._change_crypto_currency_combobox()
+        self.crypto_currency_block = False
+
+    def _change_crypto_currency_combobox_event(self, crypto_currency_str) -> None:
+        if self.crypto_currency_block:
+            return
+        self.crypto_currency_current = crypto_currency_str
+        self.log(f"self._change_crypto_currency_combobox_event({crypto_currency_str=})")
+        self._change_crypto_currency_combobox()
+
+    def _change_crypto_currency_combobox(self) -> None:
+        self.log("self._change_crypto_currency_combobox()")
+        price = self.rates[self.crypto_currency_current]
+        self.graph_widget.setText(price)

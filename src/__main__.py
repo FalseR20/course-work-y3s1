@@ -1,4 +1,9 @@
-from qt.__main__ import main
+from qt.app import app
+
+
+def main():
+    app.exec()
+
 
 if __name__ == "__main__":
     main()
