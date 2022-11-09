@@ -1,7 +1,12 @@
+import datetime
 import logging
-from src.parser import base_currencies, client, crypto_currencies
+from typing import List
 
-from PyQt6 import QtCore, QtWidgets
+from PyQt6 import QtCore, QtWidgets, QtGui
+import pyqtgraph as pg
+
+from src.data import BASE_CURRENCIES, CRYPTO_CURRENCIES
+from src.parser import client
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -42,10 +47,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.base_currency.setMaxVisibleItems(30)
         self.currencies_layout.addWidget(self.base_currency)
 
-        # Graph (stub)
-        self.graph_widget = QtWidgets.QLabel()
-        self.graph_widget.setStyleSheet("QLabel { background-color: #222; }")
-        self.central_widget_layout.addWidget(self.graph_widget)
+        # Graph
+        self.graph_item = pg.PlotItem()
+        self.graph = pg.PlotWidget(self.central_widget, plotItem=self.graph_item)
+        self.graph.setBackground(self.central_widget.palette().color(QtGui.QPalette.ColorRole.Base).name())
+        self.graph.setStyleSheet("QLabel { background-color: #222; }")
+        self.central_widget_layout.addWidget(self.graph)
 
         # Control panel
         self.control_group = QtWidgets.QGroupBox()
@@ -78,10 +85,11 @@ class MainWindow(QtWidgets.QMainWindow):
         self._fill_currencies_comboboxes()
 
     def _fill_currencies_comboboxes(self) -> None:
-        for currency in base_currencies:
-            self.base_currency.addItem(currency["id"])
+        for currency in BASE_CURRENCIES:
+            self.base_currency.addItem(currency)
         self.base_currency.setCurrentText("USD")
-        for currency in crypto_currencies:
+
+        for currency in CRYPTO_CURRENCIES:
             self.crypto_currency.addItem(currency)
         self.crypto_currency.setCurrentText("BTC")
 
@@ -90,10 +98,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.currencies_group.setEnabled(not is_checked)
         self.control_learn.setEnabled(is_checked)
         self.control_predicate.setEnabled(is_checked)
-        if is_checked:
-            price = client.get_spot_price(
-                currency_pair=f"{self.crypto_currency.currentText()}-{self.base_currency.currentText()}"
-            )["amount"]
-            self.graph_widget.setText(price)
-        else:
-            self.graph_widget.setText("")
+        if not is_checked:
+            return
+
+        self.log(f"{self.crypto_currency.currentText()}-{self.base_currency.currentText()}")
+        prices = client.get_historic_prices(
+            currency_pair=f"{self.crypto_currency.currentText()}-{self.base_currency.currentText()}",
+            period="hour",
+        )["prices"]
+        dataset: List[float] = [float(price["price"]) for price in prices]
+        dataset_times = [datetime.datetime.strptime(price["time"], "%Y-%m-%dT%H:%M:%SZ").timestamp() for price in prices]
+        # self.log(dataset)
+        # self.log(dataset_times)
+        self.graph_item.clear()
+        self.graph_item.addItem(pg.PlotDataItem(dataset_times, dataset))
