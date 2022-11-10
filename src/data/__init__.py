@@ -12,6 +12,6 @@ with _BASE_CURRENCIES_PATH.open("rb") as file:
 with _CRYPTO_CURRENCIES_PATH.open("rb") as file:
     CRYPTO_CURRENCIES: List[str] = pickle.load(file)
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print(f"{BASE_CURRENCIES=}")
     print(f"{CRYPTO_CURRENCIES=}")

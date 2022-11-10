@@ -2,8 +2,8 @@ import datetime
 import logging
 from typing import List
 
-from PyQt6 import QtCore, QtWidgets, QtGui
 import pyqtgraph as pg
+from PyQt6 import QtCore, QtGui, QtWidgets
 
 from src.data import BASE_CURRENCIES, CRYPTO_CURRENCIES
 from src.parser import client
@@ -50,8 +50,7 @@ class MainWindow(QtWidgets.QMainWindow):
         # Graph
         self.graph_item = pg.PlotItem()
         self.graph = pg.PlotWidget(self.central_widget, plotItem=self.graph_item)
-        self.graph.setBackground(self.central_widget.palette().color(QtGui.QPalette.ColorRole.Base).name())
-        self.graph.setStyleSheet("QLabel { background-color: #222; }")
+        self.graph.setBackground(self.palette().color(QtGui.QPalette.ColorRole.Window))
         self.central_widget_layout.addWidget(self.graph)
 
         # Control panel
@@ -107,8 +106,11 @@ class MainWindow(QtWidgets.QMainWindow):
             period="hour",
         )["prices"]
         dataset: List[float] = [float(price["price"]) for price in prices]
-        dataset_times = [datetime.datetime.strptime(price["time"], "%Y-%m-%dT%H:%M:%SZ").timestamp() for price in prices]
-        # self.log(dataset)
-        # self.log(dataset_times)
+        last_time = datetime.datetime.strptime(prices[-1]["time"], "%Y-%m-%dT%H:%M:%SZ")
+        dataset_times = [
+            (last_time - datetime.datetime.strptime(price["time"], "%Y-%m-%dT%H:%M:%SZ")).total_seconds() / 60
+            for price in prices
+        ]
         self.graph_item.clear()
+        # self.graph_item.addItem(pg.PlotDataItem({"price": dataset_times, "minutes": dataset}))
         self.graph_item.addItem(pg.PlotDataItem(dataset_times, dataset))
