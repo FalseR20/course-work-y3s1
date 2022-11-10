@@ -7,6 +7,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 
 from src.data import BASE_CURRENCIES, CRYPTO_CURRENCIES
 from src.parser import parse_dataset
+from src.uninn import learn, predicate
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -72,7 +73,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.control_predicate.setSizePolicy(
             QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Expanding
         )
-        self.control_predicate.setCheckable(True)
         self.control_predicate.setEnabled(False)
         self.control_predicate.clicked.connect(self._control_predicate_event)
 
@@ -113,13 +113,17 @@ class MainWindow(QtWidgets.QMainWindow):
             self.graph_item.clear()
             return
 
-        dataset, dataset_times = parse_dataset(f"{self.crypto_curr.currentText()}-{self.fiat_curr.currentText()}")
-        item = pg.PlotDataItem(dataset_times, dataset, name="Actual price")
+        self.rates, self.times = parse_dataset(f"{self.crypto_curr.currentText()}-{self.fiat_curr.currentText()}")
+        item = pg.PlotDataItem(self.times, self.rates, name="Actual price")
         self.graph_item.addItem(item)
 
     def _control_learn_event(self) -> None:
         self.control_learn.setEnabled(False)
+        learn(self.rates)
         self.control_predicate.setEnabled(True)
 
-    def _control_predicate_event(self, b):
-        pass
+    def _control_predicate_event(self):
+        data = predicate(self.rates)
+        item = pg.PlotDataItem(*data, name="Predicated price")
+        self.graph_item.addItem(item)
+        self.control_predicate.setEnabled(False)

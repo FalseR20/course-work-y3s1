@@ -98,6 +98,16 @@ class NeuralNetwork:
             self.layers[0].back_propagation(error, alpha, is_first_layer=True)
         return square_error / self.layers[-1].lens[1]
 
+    def learn_n_times(self, x: NDArray[NDArray], e: NDArray[NDArray], alpha: Optional[float] = None, n: int = 1):
+        for t in range(n):
+            square_error = self.learn(x, e, alpha)
+            print(f"Average square error {t : 3}: {square_error}")
+
+    def learn_until_c(self, x: NDArray[NDArray], e: NDArray[NDArray], alpha: Optional[float] = None, n: int = 1):
+        for t in range(n):
+            square_error = self.learn(x, e, alpha)
+            print(f"Average square error {t : 3}: {square_error}")
+
     def prediction_results_table(self, x: NDArray[NDArray], e: NDArray[NDArray]) -> None:
         """Красивый вывод прогона тестирующей выборки"""
         print("                эталон        выходное значение                  разница         среднекв. ошибка")
@@ -110,9 +120,17 @@ class NeuralNetwork:
             print(f"{e[i] : 22}{y[i] : 25}{delta[i] : 25}{square_error[i] : 25}")
         print(f"\n-- Final testing square error: {np.average(square_error) * 2} --")
 
+    def predict(self, x: NDArray, n: int) -> NDArray:
+        len_ = self.layers[0].lens[0]
+        for i in range(n):
+            y = self.go(x[-len_:])
+            x = np.append(x, y)
+        return x
 
-def save(nn: NeuralNetwork, filename=None) -> None:
-    ans = input("Желаете сохранить? (y/n): ")
+
+def save(nn: NeuralNetwork, filename=None) -> bool:
+    # ans = input("Желаете сохранить? (y/n): ")
+    ans = "y"
     if ans and (ans[0] == "y" or ans[0] == "н"):
         if filename is None:
             filename = input("Имя файла (*.nn): ") + ".nn"
@@ -122,8 +140,9 @@ def save(nn: NeuralNetwork, filename=None) -> None:
         with open(filename, "wb") as file:
             pickle.dump(nn, file)
         print("Сохранено в", filename)
-    else:
-        print("Сохранение отклонено")
+        return True
+    print("Сохранение отклонено")
+    return False
 
 
 def load(filename=None) -> NeuralNetwork:
@@ -195,14 +214,14 @@ class LayerLinear(Layer):
 
 
 def predict_set(
-    begin: float, lenght: float, count: int, step: float, function: Optional[Callable] = None
+    begin: float, lenght: float, count: int, step: float, function: Optional[Callable]
 ) -> Tuple[NDArray[NDArray], NDArray[NDArray]]:
     """Набор обучающей выборки типа:
 
     x = [ [1 2 3] [2 3 4] [3 4 5] ]\n
     e = [ [4] [5] [6] ]"""
 
-    base_array = np.arange(count + lenght)
+    base_array = np.arange(count + lenght, dtype=np.float)
     x = np.zeros(shape=(count, lenght))
     for i in range(count):
         x[i] = base_array[i : lenght + i]
@@ -210,10 +229,12 @@ def predict_set(
 
     x = x * step + begin
     e = e * step + begin
-    if function is None:
-        return x, e
-    else:
-        return function(x), function(e)
+    for i in range(len(x)):
+        for j in range(len(x[i])):
+            x[i][j] = function(x[i][j])
+    for i in range(len(e)):
+        e[i][0] = function(e[i][0])
+    return x, e
 
 
 def shuffle_set(x: NDArray[NDArray], e: NDArray[NDArray]) -> Tuple[NDArray[NDArray], NDArray[NDArray]]:
