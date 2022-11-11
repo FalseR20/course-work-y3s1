@@ -59,6 +59,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.plot_item.addItem(self.predicated_price_data_item)
         self.plot_item.addItem(self.updated_price_data_item)
 
+        # Infinite line
+        self.infinite_line = pg.InfiniteLine(0, pen=pg.mkPen(QtGui.QColor("dimgray")))
+
         # Control panel
         self.control_group = QtWidgets.QGroupBox()
         self.control_group.setMaximumHeight(60)
@@ -129,9 +132,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.control_update.setEnabled(is_checked)
 
         if not is_checked:
-            for data_item in self.plot_item.listDataItems():
-                data_item: pg.PlotDataItem
-                data_item.setData()
+            self.actual_price_data_item.setData()
+            self.plot_item.removeItem(self.infinite_line)
+            self.predicated_price_data_item.setData()
+            self.updated_price_data_item.setData()
             return
 
         self.rates, self.datetimes = parse_dataset(f"{self.crypto_curr.currentText()}-{self.fiat_curr.currentText()}")
@@ -139,6 +143,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.times: List[float] = [(dataset_dt - self.last_time).total_seconds() / 60 for dataset_dt in self.datetimes]
         self.period_minutes = abs(self.times[-2])
         self.actual_price_data_item.setData(self.times, self.rates)
+        self.plot_item.addItem(self.infinite_line)
         self.log(f"control_run_event: set params {self.last_time=}, {self.period_minutes=}, {self.times=}")
 
     def _control_learn_event(self) -> None:
