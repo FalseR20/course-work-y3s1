@@ -9,9 +9,10 @@ Python-project with Qt and some AI to predicate courses of cryptocurrencies.
 Python 3.8+
 
 ```shell
+python3 -m pip install --upgrade pip
 python3 -m venv ./venv
 source ./venv/bin/activate
-pip install -r ./requirements.txt
+pip install -r ./requirements.txt --use-pep517
 ```
 
 ## Usage
