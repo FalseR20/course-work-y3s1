@@ -154,7 +154,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _control_predicate_event(self) -> None:
         n = 20
-        self.log(f"control_learn_event: started with {n=}")
+        self.log(f"control_predicate_event: started with {n=}")
         data = predicate(self.rates, n)
         times = [i * self.period_minutes for i in range(0, n + 1)]
 
