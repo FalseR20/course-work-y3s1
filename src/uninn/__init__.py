@@ -1,3 +1,6 @@
+import sys
+from typing import List
+
 import numpy as np
 
 from src.parser import parse_dataset
@@ -36,18 +39,15 @@ def main():
 def learn(rates):
     x, e = uninn.predict_set(0, LAYER_LEN, len(rates) - LAYER_LEN, 1, lambda i: rates[int(i)])
     nn = NN()
-    nn.learn_n_times(x, e, n=1_000)
-    # uninn.save(nn, "20v2.nn")
+    nn.learn_n_times(x, e, n=300)
 
 
-def predicate(rates, n=10):
+def predicate(rates: List[float], n: int) -> List[float]:
     nn = NN()
-    res = nn.predict(np.array(rates[-LAYER_LEN:]), n)
-    res = res.tolist()[LAYER_LEN:]
-    times = [i / 60 for i in range(10, 10 * (n + 1), 10)]
-    print(res)
-    print(times)
-    return times, res
+    result = nn.predict(np.array(rates[-LAYER_LEN:]), n)
+    result = result.tolist()[LAYER_LEN - 1:]
+    print(result, file=sys.stderr)
+    return result
 
 
 if __name__ == "__main__":

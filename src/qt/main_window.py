@@ -1,4 +1,3 @@
-import datetime
 import logging
 from typing import List
 
@@ -76,6 +75,15 @@ class MainWindow(QtWidgets.QMainWindow):
         self.control_predicate.setEnabled(False)
         self.control_predicate.clicked.connect(self._control_predicate_event)
 
+        # Control update
+        self.control_update = QtWidgets.QPushButton()
+        self.control_update.setText("Update")
+        self.control_update.setSizePolicy(
+            QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Expanding
+        )
+        self.control_update.setEnabled(False)
+        self.control_update.clicked.connect(self._control_update_event)
+
         # Layouts
         self.central_widget_layout = QtWidgets.QVBoxLayout(self.central_widget)
         self.central_widget_layout.addWidget(self.currencies_group)
@@ -91,6 +99,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.control_group_layout.addWidget(self.control_run)
         self.control_group_layout.addWidget(self.control_learn)
         self.control_group_layout.addWidget(self.control_predicate)
+        self.control_group_layout.addWidget(self.control_update)
 
         # Final logic
         self._fill_currencies_comboboxes()
@@ -106,24 +115,46 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _control_checkbox_run_event(self, is_checked: bool) -> None:
         self.log(f"self._control_checkbox_run_event({is_checked=})")
-        self.currencies_group.setEnabled(not is_checked)
+        self.currencies_group.setDisabled(is_checked)
         self.control_learn.setEnabled(is_checked)
 
         if not is_checked:
             self.graph_item.clear()
             return
 
-        self.rates, self.times = parse_dataset(f"{self.crypto_curr.currentText()}-{self.fiat_curr.currentText()}")
+        self.rates, self.datetimes = parse_dataset(f"{self.crypto_curr.currentText()}-{self.fiat_curr.currentText()}")
+        self.last_time = self.datetimes[-1]
+        self.times: List[float] = [(dataset_dt - self.last_time).total_seconds() / 60 for dataset_dt in self.datetimes]
+        self.period_minutes = abs(self.times[-2])
         item = pg.PlotDataItem(self.times, self.rates, name="Actual price")
         self.graph_item.addItem(item)
 
     def _control_learn_event(self) -> None:
         self.control_learn.setEnabled(False)
         learn(self.rates)
+        self.control_learn.setEnabled(True)
         self.control_predicate.setEnabled(True)
 
-    def _control_predicate_event(self):
-        data = predicate(self.rates)
-        item = pg.PlotDataItem(*data, name="Predicated price")
+    def _control_predicate_event(self) -> None:
+        n = 10
+        data = predicate(self.rates, n)
+        times = [i * self.period_minutes for i in range(0, n + 1)]
+        item = pg.PlotDataItem(times, data, name="Predicated price")
+        item.setPen(pg.mkPen(QtGui.QColor("red")))
         self.graph_item.addItem(item)
         self.control_predicate.setEnabled(False)
+        self.control_update.setEnabled(True)
+
+    def _control_update_event(self) -> None:
+        rates, datetimes = parse_dataset(f"{self.crypto_curr.currentText()}-{self.fiat_curr.currentText()}")
+        print(self.datetimes)
+        print(datetimes)
+        last_i = datetimes.index(self.last_time)
+        rates = rates[last_i:]
+        datetimes = datetimes[last_i:]
+        print(rates)
+        print(datetimes)
+        times: List[float] = [(dataset_dt - self.last_time).total_seconds() / 60 for dataset_dt in datetimes]
+        item = pg.PlotDataItem(times, rates, name="Updated price")
+        item.setPen(pg.mkPen(QtGui.QColor("blue")))
+        self.graph_item.addItem(item)
