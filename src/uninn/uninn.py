@@ -101,7 +101,7 @@ class NeuralNetwork:
     def learn_n_times(self, x: NDArray[NDArray], e: NDArray[NDArray], alpha: Optional[float] = None, n: int = 1):
         for t in range(n):
             square_error = self.learn(x, e, alpha)
-            print(f"Average square error {t : 3}: {square_error}")
+            # print(f"Average square error {t : 3}: {square_error}")
 
     def learn_until_c(self, x: NDArray[NDArray], e: NDArray[NDArray], alpha: Optional[float] = None, n: int = 1):
         for t in range(n):
