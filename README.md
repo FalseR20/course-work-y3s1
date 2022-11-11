@@ -16,6 +16,12 @@ pip install -r ./requirements.txt
 
 ## Usage
 
+To running use one of these commands:
+
 ```shell
 python -m src
+# or
+python ./run.py
+# or
+./run.py  # For linux
 ```
