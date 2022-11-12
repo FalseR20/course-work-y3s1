@@ -1,6 +1,6 @@
 import os
 import pickle
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional, Tuple, Union
 
 import numpy as np
 from numpy.typing import NDArray
@@ -70,9 +70,9 @@ class Layer:
 
 
 class NeuralNetwork:
-    def __init__(self, *args: Layer) -> None:
+    def __init__(self, *args: Union[Layer, Tuple[int, int]]) -> None:
         """Создание нейросети с заданием массива слоев"""
-        self.layers = args
+        self.layers = [arg if isinstance(arg, Layer) else Layer(arg) for arg in args]
         self.back_propagation_range = range(len(self.layers) - 1, 0, -1)
 
     def go(self, x: NDArray) -> NDArray:

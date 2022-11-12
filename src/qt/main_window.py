@@ -4,10 +4,10 @@ from typing import List
 import pyqtgraph as pg
 from PyQt6 import QtCore, QtGui, QtWidgets
 
-from src import CUSTOM_LOG_LEVEL
+from src import CUSTOM_LOG_LEVEL, config
 from src.data import BASE_CURRENCIES, CRYPTO_CURRENCIES
 from src.parser import parse_dataset
-from src.uninn import learn, predicate
+from src.uninn import learn, predict
 
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -51,12 +51,12 @@ class MainWindow(QtWidgets.QMainWindow):
 
         # Plot data items
         self.actual_price_data_item = pg.PlotDataItem(name="Actual price")
-        self.predicated_price_data_item = pg.PlotDataItem(name="Predicated price")
-        self.predicated_price_data_item.setPen(pg.mkPen(QtGui.QColor("red")))
+        self.predicted_price_data_item = pg.PlotDataItem(name="Predicated price")
+        self.predicted_price_data_item.setPen(pg.mkPen(QtGui.QColor("red")))
         self.updated_price_data_item = pg.PlotDataItem(name="Updated price")
         self.updated_price_data_item.setPen(pg.mkPen(QtGui.QColor("blue")))
         self.plot_item.addItem(self.actual_price_data_item)
-        self.plot_item.addItem(self.predicated_price_data_item)
+        self.plot_item.addItem(self.predicted_price_data_item)
         self.plot_item.addItem(self.updated_price_data_item)
 
         # Infinite line
@@ -80,14 +80,12 @@ class MainWindow(QtWidgets.QMainWindow):
         self.control_learn.setDisabled(True)
         self.control_learn.clicked.connect(self._control_learn_event)
 
-        # Control predicate
-        self.control_predicate = QtWidgets.QPushButton()
-        self.control_predicate.setText("Predicate")
-        self.control_predicate.setSizePolicy(
-            QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Expanding
-        )
-        self.control_predicate.setDisabled(True)
-        self.control_predicate.clicked.connect(self._control_predicate_event)
+        # Control predict
+        self.control_predict = QtWidgets.QPushButton()
+        self.control_predict.setText("Predict")
+        self.control_predict.setSizePolicy(QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Expanding)
+        self.control_predict.setDisabled(True)
+        self.control_predict.clicked.connect(self._control_predict_event)
 
         # Control update
         self.control_update = QtWidgets.QPushButton()
@@ -110,7 +108,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.control_group_layout = QtWidgets.QHBoxLayout(self.control_group)
         self.control_group_layout.addWidget(self.control_run)
         self.control_group_layout.addWidget(self.control_learn)
-        self.control_group_layout.addWidget(self.control_predicate)
+        self.control_group_layout.addWidget(self.control_predict)
         self.control_group_layout.addWidget(self.control_update)
 
         # Final logic
@@ -134,7 +132,7 @@ class MainWindow(QtWidgets.QMainWindow):
         if not is_checked:
             self.actual_price_data_item.setData()
             self.plot_item.removeItem(self.infinite_line)
-            self.predicated_price_data_item.setData()
+            self.predicted_price_data_item.setData()
             self.updated_price_data_item.setData()
             return
 
@@ -148,18 +146,17 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def _control_learn_event(self) -> None:
         self.log("control_learn_event: started")
-        learn(self.rates, 300)
-        self.control_predicate.setEnabled(True)
+        learn(self.rates, config.LEARN_TIMES)
+        self.control_predict.setEnabled(True)
         self.log("control_learn_event: finished")
 
-    def _control_predicate_event(self) -> None:
-        n = 20
-        self.log(f"control_predicate_event: started with {n=}")
-        data = predicate(self.rates, n)
-        times = [i * self.period_minutes for i in range(0, n + 1)]
+    def _control_predict_event(self) -> None:
+        self.log("control_predict_event: started")
+        data = predict(self.rates, config.PREDICT_STEPS)
+        times = [i * self.period_minutes for i in range(0, config.PREDICT_STEPS + 1)]
 
-        self.predicated_price_data_item.setData(times, data)
-        self.control_predicate.setDisabled(True)
+        self.predicted_price_data_item.setData(times, data)
+        self.control_predict.setDisabled(True)
 
     def _control_update_event(self) -> None:
         self.log("control_update_event: started")
