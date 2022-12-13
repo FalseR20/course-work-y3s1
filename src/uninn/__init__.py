@@ -11,7 +11,7 @@ class NN:
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
-            cls._instance = uninn.NeuralNetwork(*config.LAYERS)
+            cls._instance = uninn.NeuralNetwork(config.LAYERS)
         return cls._instance
 
 

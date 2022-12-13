@@ -1,9 +1,12 @@
-from typing import Tuple
+from typing import List
 
-# nn params
-INPUT_LAYER_LEN: int = 20
-LAYERS: Tuple[Tuple[int, int]] = ((INPUT_LAYER_LEN, 1),)
+# nn layers
+LAYERS: List[int] = [50, 50, 1]
+
+# nn input-output
+INPUT_LAYER_LEN: int = LAYERS[0]
+assert LAYERS[-1] == 1
 
 # learn/predicate
-LEARN_TIMES: int = 300
+LEARN_TIMES: int = 100
 PREDICT_STEPS: int = 30
