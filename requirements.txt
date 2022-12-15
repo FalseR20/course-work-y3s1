@@ -3,7 +3,6 @@ charset-normalizer==2.1.1
 coinbase==2.1.0
 idna==3.4
 numpy==1.23.4
-pkg_resources==0.0.0
 pycryptodome==3.15.0
 PyQt6==6.4.0
 PyQt6-Qt6==6.4.0
