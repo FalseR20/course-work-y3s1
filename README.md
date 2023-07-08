@@ -26,3 +26,8 @@ python ./run.py
 # or
 ./run.py  # For linux
 ```
+
+## Examples
+
+![image](https://github.com/FalseR20/course-work-y3s1/assets/90003166/9fd57034-7938-48d1-a820-5f47f4fca3fc)
+![image](https://github.com/FalseR20/course-work-y3s1/assets/90003166/a7eca3ef-817a-4976-80e6-767b8ac27964)
